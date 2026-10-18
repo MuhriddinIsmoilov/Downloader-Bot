@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All-in-One Video Downloader</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Telegram Web App kutubxonasi (Bot ichidan ochilsa ham ishlaydi) -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
+    
+    <div class="max-w-md w-full bg-slate-800 p-8 rounded-3xl shadow-2xl border border-slate-700">
+        <!-- Sarlavha -->
+        <div class="text-center mb-6">
+            <h1 class="text-3xl font-extrabold bg-gradient-to-r from-indigo-400 to-pink-500 bg-clip-text text-transparent">
+                Video Downloader
+            </h1>
+            <p class="text-slate-400 text-xs mt-2">YouTube, Instagram, TikTok, Threads & Pinterest</p>
+        </div>
+        
+        <!-- Forma -->
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">Video havolasini kiriting:</label>
+                <input type="text" id="urlInput" placeholder="https://www.instagram.com/p/..." 
+                       class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-indigo-500 text-sm placeholder-slate-600 transition">
+            </div>
+            
+            <button onclick="downloadVideo()" id="downloadBtn"
+                    class="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-medium py-3 rounded-xl transition duration-200 shadow-lg shadow-indigo-600/30">
+                Yuklab olish 🚀
+            </button>
+        </div>
+
+        <!-- Holat va natija -->
+        <div id="status" class="mt-4 text-center text-sm font-medium"></div>
+        <div id="result" class="mt-4"></div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-8 text-slate-500 text-xs">
+        &copy; 2026 All-in-One Downloader. Barcha huquqlar himoyalangan.
+    </footer>
+
+    <script>
+        // Telegram WebApp sozlamasi
+        let tg = window.Telegram.WebApp;
+        if (tg) {
+            tg.expand();
+        }
+
+        // Backend API manzili (Agar serverni boshqa joyga qursangiz, shu yerga to'liq https manzilini yozasiz)
+        // Masalan: const API_URL = "https://sizning-server.onrender.com/api/download";
+        const API_URL = "/api/download"; 
+
+        async function downloadVideo() {
+            const url = document.getElementById('urlInput').value.trim();
+            const statusDiv = document.getElementById('status');
+            const resultDiv = document.getElementById('result');
+            const btn = document.getElementById('downloadBtn');
+
+            if (!url) {
+                statusDiv.innerText = "⚠️ Iltimos, havola kiriting!";
+                statusDiv.className = "mt-4 text-center text-sm text-yellow-400 font-medium";
+                return;
+            }
+
+            btn.disabled = true;
+            statusDiv.innerText = "⏳ Video yuklanmoqda, iltimos biroz kuting...";
+            statusDiv.className = "mt-4 text-center text-sm text-indigo-400 font-medium";
+            resultDiv.innerHTML = "";
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    statusDiv.innerText = "✅ Video muvaffaqiyatli tayyorlandi!";
+                    statusDiv.className = "mt-4 text-center text-sm text-green-400 font-medium";
+                    
+                    resultDiv.innerHTML = `
+                        <a href="${data.download_url}" download 
+                           class="block w-full text-center bg-green-600 hover:bg-green-700 text-white font-medium py-3 rounded-xl transition shadow-lg shadow-green-600/30">
+                           Faylni saqlab olish 💾
+                        </a>
+                    `;
+                } else {
+                    statusDiv.innerText = "❌ Xatolik yuz berdi.";
+                    statusDiv.className = "mt-4 text-center text-sm text-red-400 font-medium";
+                    resultDiv.innerHTML = `<p class="text-red-400 text-xs text-center bg-red-950/50 p-3 rounded-xl border border-red-900">${data.error}</p>`;
+                }
+            } catch (err) {
+                statusDiv.innerText = "❌ Tarmoqda yoki serverda xatolik yuz berdi.";
+                statusDiv.className = "mt-4 text-center text-sm text-red-400 font-medium";
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
